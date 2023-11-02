@@ -280,14 +280,15 @@ def main(argv):
         print("  nodeUnlockedaccount\t\t/node/unlockedaccount")
         print()
         return 0
-    elif 4 <= len(argv):
+    if 3 <= len(argv):
+        hostname = argv[2]
+    if 4 <= len(argv):
         if not argv[3].isdigit():
             print("argument is not digit")
             return 1
         port = argv[3]
 
     command = argv[1]
-    hostname = argv[2]
 
     # print("COMMAND=" + command + ", HOSTNAME=" + hostname + ", PORT=" + str(port))
 
@@ -304,7 +305,7 @@ def main(argv):
             print(result)
             print()
     elif command == "nodeUnlockedaccount" or command == "nu":
-        result = peer_client.get_unlocked_accounts()
+        results = peer_client.get_unlocked_accounts()
         for result in results:
             print(result)
             print()
