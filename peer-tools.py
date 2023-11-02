@@ -1,3 +1,5 @@
+from dataclasses import asdict, dataclass
+import json
 import os
 import sys
 import socket
@@ -13,6 +15,7 @@ CHAIN_STATISTICS = 5
 NODE_DISCOVERY_PULL_PING = 0x111
 NODE_DISCOVERY_PULL_PEERS = 0x113
 UNLOCKED_ACCOUNTS = 0x304
+FINALIZATION_STATISTICS = 0x132
 
 x509 = None
 pubkey_str = ""
@@ -36,30 +39,63 @@ class ChainStatistics:
         )
 
 
+class FinalizationStatistics:
+    def __init__(self):
+        self.epoch = 0
+        self.point = 0
+        self.height = 0
+        self.hash = ""
+
+    def __str__(self):
+        return "\n".join(
+            [
+                f" finalized epoch: {self.epoch}",
+                f" finalized point: {self.point}",
+                f"finalized height: {self.height}",
+                f"  finalized hash: {self.hash}",
+            ]
+        )
+
+
+class ChainInfo:
+    class FinalizedBlock:
+        def __init__(self):
+            self.finalizationEpoch = 0
+            self.finalizationPoint = 0
+            self.height = 0
+            self.hash = 0
+
+    def __init__(self):
+        self.height = 0
+        self.scoreHigh = 0
+        self.scoreLow = 0
+        self.latestFinalizedBlock = self.FinalizedBlock()
+
+
 class NodeDiscoveryPullPing:
     def __init__(self):
         self.version = 0
-        self.public_key = ""
-        self.network_generation_hash_seed = ""
+        self.publicKey = ""
+        self.networkGenerationHashSeed = ""
         self.roles = 0
         self.port = 0
-        self.network_identifier = 0
+        self.networkIdentifier = 0
         self.host = ""
-        self.friendly_name = ""
-        self.node_public_key = ""
+        self.friendlyName = ""
+        self.nodePublicKey = ""
 
     def __str__(self):
         return "\n".join(
             [
                 f"                     version: {self.version}",
-                f"                  public key: {self.public_key}",
-                f"network generation hash seed: {self.network_generation_hash_seed}",
+                f"                  public key: {self.publicKey}",
+                f"network generation hash seed: {self.networkGenerationHashSeed}",
                 f"                       roles: {self.roles}",
                 f"                        port: {self.port}",
-                f"          network identifier: {self.network_identifier}",
+                f"          network identifier: {self.networkIdentifier}",
                 f"                        host: {self.host}",
-                f"               friendly name: {self.friendly_name}",
-                f"             node_public key: {self.node_public_key}",
+                f"               friendly name: {self.friendlyName}",
+                f"             node_public key: {self.nodePublicKey}",
             ]
         )
 
@@ -67,25 +103,25 @@ class NodeDiscoveryPullPing:
 class NodeDiscoveryPullPeers:
     def __init__(self):
         self.version = 0
-        self.public_key = ""
-        self.network_generation_hash_seed = ""
+        self.publicKey = ""
+        self.networkGenerationHashSeed = ""
         self.roles = 0
         self.port = 0
-        self.network_identifier = 0
+        self.networkIdentifier = 0
         self.host = ""
-        self.friendly_name = ""
+        self.friendlyName = ""
 
     def __str__(self):
         return "\n".join(
             [
                 f"                     version: {self.version}",
-                f"                  public key: {self.public_key}",
-                f"network generation hash seed: {self.network_generation_hash_seed}",
+                f"                  public key: {self.publicKey}",
+                f"network generation hash seed: {self.networkGenerationHashSeed}",
                 f"                       roles: {self.roles}",
                 f"                        port: {self.port}",
-                f"          network_identifier: {self.network_identifier}",
+                f"          network_identifier: {self.networkIdentifier}",
                 f"                        host: {self.host}",
-                f"               friendly_name: {self.friendly_name}",
+                f"               friendly_name: {self.friendlyName}",
             ]
         )
 
@@ -100,6 +136,11 @@ class UnlockedAccounts:
                 f"unlockedAccount: {self.unlocked_account}",
             ]
         )
+
+
+class NodeUnlockedAccount:
+    def __init__(self):
+        self.unlockedAccount = []
 
 
 class SymbolPeerClient:
@@ -177,6 +218,12 @@ class SymbolPeerClient:
             packet_type, self._parse_chain_statistics_response
         )
 
+    def get_finalization_statistics(self):
+        packet_type = FINALIZATION_STATISTICS
+        return self._send_socket_request(
+            packet_type, self._parse_finalization_statistics_response
+        )
+
     def get_node_discovery_pull_ping(self):
         packet_type = NODE_DISCOVERY_PULL_PING
         return self._send_socket_request(
@@ -205,26 +252,33 @@ class SymbolPeerClient:
         return chain_statistics
 
     @staticmethod
+    def _parse_finalization_statistics_response(reader):
+        finalization_statistics = FinalizationStatistics()
+
+        finalization_statistics.epoch = reader.read_int(4)
+        finalization_statistics.point = reader.read_int(4)
+        finalization_statistics.height = reader.read_int(8)
+        finalization_statistics.hash = reader.read_hex_string(32)
+
+        return finalization_statistics
+
+    @staticmethod
     def _node_discovery_pull_ping_response(reader):
         node_discovery_pull_ping = NodeDiscoveryPullPing()
 
         reader.read_int(4)
         node_discovery_pull_ping.version = reader.read_int(4)
-        node_discovery_pull_ping.public_key = reader.read_hex_string(32)
-        node_discovery_pull_ping.network_generation_hash_seed = reader.read_hex_string(
-            32
-        )
+        node_discovery_pull_ping.publicKey = reader.read_hex_string(32)
+        node_discovery_pull_ping.networkGenerationHashSeed = reader.read_hex_string(32)
         node_discovery_pull_ping.roles = reader.read_int(4)
         node_discovery_pull_ping.port = reader.read_int(2)
-        node_discovery_pull_ping.network_identifier = reader.read_int(1)
+        node_discovery_pull_ping.networkIdentifier = reader.read_int(1)
         host_length = reader.read_int(1)
         friendly_name_length = reader.read_int(1)
         node_discovery_pull_ping.host = reader.read_string(host_length)
-        node_discovery_pull_ping.friendly_name = reader.read_string(
-            friendly_name_length
-        )
+        node_discovery_pull_ping.friendlyName = reader.read_string(friendly_name_length)
 
-        node_discovery_pull_ping.node_public_key = pubkey_str
+        node_discovery_pull_ping.nodePublicKey = pubkey_str
 
         return node_discovery_pull_ping
 
@@ -236,17 +290,17 @@ class SymbolPeerClient:
             node_discovery_pull_peers = NodeDiscoveryPullPeers()
             reader.read_int(4)
             node_discovery_pull_peers.version = reader.read_int(4)
-            node_discovery_pull_peers.public_key = reader.read_hex_string(32)
-            node_discovery_pull_peers.network_generation_hash_seed = (
+            node_discovery_pull_peers.publicKey = reader.read_hex_string(32)
+            node_discovery_pull_peers.networkGenerationHashSeed = (
                 reader.read_hex_string(32)
             )
             node_discovery_pull_peers.roles = reader.read_int(4)
             node_discovery_pull_peers.port = reader.read_int(2)
-            node_discovery_pull_peers.network_identifier = reader.read_int(1)
+            node_discovery_pull_peers.networkIdentifier = reader.read_int(1)
             host_length = reader.read_int(1)
             friendly_name_length = reader.read_int(1)
             node_discovery_pull_peers.host = reader.read_string(host_length)
-            node_discovery_pull_peers.friendly_name = reader.read_string(
+            node_discovery_pull_peers.friendlyName = reader.read_string(
                 friendly_name_length
             )
             node_discovery_pull_peers_list.append(node_discovery_pull_peers)
@@ -263,6 +317,13 @@ class SymbolPeerClient:
             unlocked_accounts_list.append(unlocked_accounts)
 
         return unlocked_accounts_list
+
+
+def default_method(item):
+    if isinstance(item, object) and hasattr(item, "__dict__"):
+        return item.__dict__
+    else:
+        raise TypeError
 
 
 def main(argv):
@@ -294,21 +355,35 @@ def main(argv):
 
     peer_client = SymbolPeerClient(hostname, port, CERTIFICATE_DIRECTORY)
     if command == "chainInfo" or command == "ci":
-        result = peer_client.get_chain_statistics()
-        print(result)
+        chain_statistics = peer_client.get_chain_statistics()
+        finalization_statistics = peer_client.get_finalization_statistics()
+        chain_info = ChainInfo()
+        chain_info.height = chain_statistics.height
+        chain_info.scoreHigh = chain_statistics.score_high
+        chain_info.scoreLow = chain_statistics.score_low
+        chain_info.latestFinalizedBlock.finalizationEpoch = (
+            finalization_statistics.epoch
+        )
+        chain_info.latestFinalizedBlock.finalizationPoint = (
+            finalization_statistics.point
+        )
+        chain_info.latestFinalizedBlock.height = finalization_statistics.height
+        chain_info.latestFinalizedBlock.hash = finalization_statistics.hash
+        print(json.dumps(chain_info, default=default_method, indent=2))
     elif command == "nodeInfo" or command == "ni":
-        result = peer_client.get_node_discovery_pull_ping()
-        print(result)
+        node_discovery_pull_ping = peer_client.get_node_discovery_pull_ping()
+        print(json.dumps(node_discovery_pull_ping, default=default_method, indent=2))
     elif command == "nodePeers" or command == "np":
-        results = peer_client.get_node_discovery_pull_peers()
-        for result in results:
-            print(result)
-            print()
+        node_discovery_pull_peers = peer_client.get_node_discovery_pull_peers()
+        print(json.dumps(node_discovery_pull_peers, default=default_method, indent=2))
     elif command == "nodeUnlockedaccount" or command == "nu":
-        results = peer_client.get_unlocked_accounts()
-        for result in results:
-            print(result)
-            print()
+        unlocked_accounts = peer_client.get_unlocked_accounts()
+        node_unlocked_account = NodeUnlockedAccount()
+        for unlocked_account in unlocked_accounts:
+            node_unlocked_account.unlockedAccount.append(
+                unlocked_account.unlocked_account
+            )
+        print(json.dumps(node_unlocked_account, default=default_method, indent=2))
     else:
         print("unknown command")
         return 1
