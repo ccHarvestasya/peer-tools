@@ -332,13 +332,17 @@ def main(argv):
     port = 7900
     if 2 > len(argv):
         print()
-        print(os.path.basename(__file__) + " COMMAND HOSTNAME [PORT]")
+        print(os.path.basename(__file__) + " COMMAND [HOSTNAME] [PORT]")
         print()
         print("COMMANDS")
         print("  chainInfo\t\t\t/chain/info")
         print("  nodeInfo\t\t\t/node/info")
         print("  nodePeers\t\t\t/node/peers")
         print("  nodeUnlockedaccount\t\t/node/unlockedaccount")
+        print("HOSTNAME")
+        print("  default: 127.0.0.1")
+        print("PORT")
+        print("  default: 7900")
         print()
         return 0
     if 3 <= len(argv):
