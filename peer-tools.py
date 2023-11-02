@@ -56,10 +56,10 @@ class NodeDiscoveryPullPing:
                 f"network generation hash seed: {self.network_generation_hash_seed}",
                 f"                       roles: {self.roles}",
                 f"                        port: {self.port}",
-                f"          network_identifier: {self.network_identifier}",
+                f"          network identifier: {self.network_identifier}",
                 f"                        host: {self.host}",
-                f"               friendly_name: {self.friendly_name}",
-                f"             node_public_key: {self.node_public_key}",
+                f"               friendly name: {self.friendly_name}",
+                f"             node_public key: {self.node_public_key}",
             ]
         )
 

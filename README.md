@@ -24,7 +24,7 @@ extension.diagnostics は symbol-bootstrap ならデフォルトで有効だと�
 ## SymbolSDK をインストール
 
 ```
-pip install symbol-sdk-python pyopenssl
+pip install symbol-sdk-python pyopenssl zenlog
 ```
 
 ## peer-tools と certtool をクローン
