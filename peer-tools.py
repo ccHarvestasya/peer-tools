@@ -1,4 +1,3 @@
-from dataclasses import asdict, dataclass
 import json
 import os
 import sys
