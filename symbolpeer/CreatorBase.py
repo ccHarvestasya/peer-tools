@@ -15,9 +15,7 @@ class CreatorBase:
 
         if 0 == len(read_buffer):
             # レスポンスが空
-            raise ConnectionRefusedError(
-                f"socket returned empty data for {self.node_host}"
-            )
+            raise ConnectionRefusedError(f"socket returned empty data")
 
         # レスポンスを全部読み込む
         size = BufferReader(read_buffer).read_int(4)
