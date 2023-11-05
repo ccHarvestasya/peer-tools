@@ -1,8 +1,8 @@
-# peer-tools
+# peer_tools
 
 ピアノードの情報を取得する。
 
-# 注意
+## 注意
 
 Unlockedaccount を取得するには、以下の条件が必要です。
 
@@ -29,48 +29,64 @@ trustedHosts:  172.20.0.1
 extension.diagnostics は symbol-bootstrap ならデフォルトで有効だと思います。  
 (target/nodes/dhealth-peer-node/server-config/resources/config-extensions-server.properties)
 
-# 準備
+## 準備
 
-## SymbolSDK をインストール
+### SymbolSDK をインストール
 
 ```
 pip install symbol-sdk-python pyopenssl zenlog
 ```
 
-## peer-tools と certtool をクローン
+### peer-tools と certtool をクローン
 
 ```
 git clone https://github.com/ccHarvestasya/peer-tools.git
 git clone https://github.com/ccHarvestasya/symbol-node-configurator.git
 ```
 
-## CA プライベートキー生成
+### CA プライベートキー生成
 
 ```
 cd peer-tools
 openssl genpkey -algorithm ed25519 -outform PEM -out ca.key.pem
 ```
 
-## 証明書の生成
+### 証明書の生成
 
 ```
 python ../symbol-node-configurator/certtool.py --working cert --name-ca "my cool CA" --name-node "my cool node name" --ca ca.key.pem
 cat cert/node.crt.pem cert/ca.crt.pem > cert/node.full.crt.pem
 ```
 
-# 実行
+## 実行
 
 ```
 python peer-tools.py nodeInfo 11.dusanjp.com
 ```
 
-## 通信ポート変更されている場合
+### 通信ポート変更されている場合
 
 引数にポート番号を指定
 
 ```
 python peer-tools.py nodeInfo 03.symbol-node.com 7913
 ```
+
+# peer_simple_rest
+
+## 追加で必要なパッケージをインストール
+
+```
+pip install flask waitress --user
+```
+
+## 実行
+
+```
+waitress-serve --port=3000 peer_simple_rest:app
+```
+
+終了は waitress-serve を kill して。
 
 # 参考
 
