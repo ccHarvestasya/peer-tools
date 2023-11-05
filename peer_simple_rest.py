@@ -1,6 +1,6 @@
 import json
 import os
-from flask import Flask, Response, jsonify, request
+from flask import Flask, Response, request
 
 from symbolpeer.ChainInfoCreator import ChainInfoCreator
 from symbolpeer.NodeInfoCreator import NodeInfoCreator
