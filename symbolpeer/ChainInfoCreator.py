@@ -27,13 +27,13 @@ class ChainInfo:
         def __init__(self):
             self.finalizationEpoch = 0
             self.finalizationPoint = 0
-            self.height = 0
-            self.hash = 0
+            self.height = "0"
+            self.hash = ""
 
     def __init__(self):
-        self.height = 0
-        self.scoreHigh = 0
-        self.scoreLow = 0
+        self.height = "0"
+        self.scoreHigh = "0"
+        self.scoreLow = "0"
         self.latestFinalizedBlock = self.FinalizedBlock()
 
 
@@ -56,12 +56,12 @@ class ChainInfoCreator(CreatorBase):
 
         # ChainInfo データ作成
         ci = ChainInfo()
-        ci.height = cs.height
-        ci.scoreHigh = cs.score_high
-        ci.scoreLow = cs.score_low
+        ci.height = str(cs.height)
+        ci.scoreHigh = str(cs.score_high)
+        ci.scoreLow = str(cs.score_low)
         ci.latestFinalizedBlock.finalizationEpoch = fs.epoch
         ci.latestFinalizedBlock.finalizationPoint = fs.point
-        ci.latestFinalizedBlock.height = fs.height
+        ci.latestFinalizedBlock.height = str(fs.height)
         ci.latestFinalizedBlock.hash = fs.hash
 
         return ci
